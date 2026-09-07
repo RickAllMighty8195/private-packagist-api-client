@@ -62,9 +62,37 @@ class TrustedPublishingTokenExchangeTest extends PluginTestCase
         $requests = $this->httpClient->getRequests();
         $this->assertCount(2, $requests);
         $this->assertSame('/oidc/audience/organization', (string) $requests[0]->getUri());
-        $this->assertSame('/oidc/token-exchange/organization/acme/package', (string) $requests[1]->getUri());
+        $this->assertSame('/oidc/token-exchange/organization/acme%2Fpackage', (string) $requests[1]->getUri());
 
         $this->assertStringContainsString('PACKAGIST-HMAC-SHA256 Key=key', $requestAfterPlugin->getHeader('Authorization')[0]);
+    }
+
+    /**
+     * The organization and package name reach the plugin from the caller. Unencoded, a "#" or "?" in
+     * either of them would end the path during URI parsing and exchange a token for another package.
+     */
+    public function testTokenExchangeEncodesPathArguments(): void
+    {
+        $plugin = new TrustedPublishingTokenExchange(
+            'organization',
+            'acme/package#',
+            new HttpPluginClientBuilder($this->httpClient),
+            $this->tokenGenerator
+        );
+
+        $this->tokenGenerator
+            ->expects($this->once())
+            ->method('generate')
+            ->willReturn(Token::fromTokenString('test.test.test'));
+
+        $this->httpClient->addResponse(new Response(200, [], json_encode(['audience' => 'private-packagist-trusted-publishing:organization'])));
+        $this->httpClient->addResponse(new Response(200, [], json_encode(['key' => 'key', 'secret' => 'secret'])));
+
+        $plugin->handleRequest(new Request('GET', '/api/packages/acme/package'), $this->next, $this->first);
+
+        $requests = $this->httpClient->getRequests();
+        $this->assertCount(2, $requests);
+        $this->assertSame('/oidc/token-exchange/organization/acme%2Fpackage%23', (string) $requests[1]->getUri());
     }
 
     public function testNoTokenGenerated(): void

@@ -86,6 +86,9 @@ class HttpPluginClientBuilder
         }
     }
 
+    /**
+     * @return HttpMethodsClient
+     */
     public function getHttpClient()
     {
         if (!$this->pluginClient) {

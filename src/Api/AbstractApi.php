@@ -13,6 +13,7 @@ use Http\Discovery\Psr17FactoryDiscovery;
 use PrivatePackagist\ApiClient\Client;
 use PrivatePackagist\ApiClient\Exception\RuntimeException;
 use PrivatePackagist\ApiClient\HttpClient\Message\ResponseMediator;
+use PrivatePackagist\ApiClient\HttpClient\RequestPath;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
@@ -180,6 +181,19 @@ abstract class AbstractApi
 
         return $this->responseMediator->getContent($response);
     }
+
+    /**
+     * Builds a request path with URL-encoded arguments, see RequestPath::build().
+     *
+     * @param string $template
+     * @param string|int ...$arguments
+     * @return string
+     */
+    protected function buildPath($template, ...$arguments)
+    {
+        return RequestPath::build($template, ...$arguments);
+    }
+
     /**
      * @param array $parameters
      * @return null|string

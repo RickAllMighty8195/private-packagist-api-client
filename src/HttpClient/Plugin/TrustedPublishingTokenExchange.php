@@ -11,6 +11,7 @@ namespace PrivatePackagist\ApiClient\HttpClient\Plugin;
 
 use Http\Client\Common\Plugin;
 use PrivatePackagist\ApiClient\HttpClient\HttpPluginClientBuilder;
+use PrivatePackagist\ApiClient\HttpClient\RequestPath;
 use PrivatePackagist\OIDC\Identities\TokenGeneratorInterface;
 use Psr\Http\Message\RequestInterface;
 
@@ -43,7 +44,7 @@ final class TrustedPublishingTokenExchange implements Plugin
         $this->httpPluginClientBuilder->removePlugin(self::class);
 
         $privatePackagistHttpclient = $this->httpPluginClientBuilder->getHttpClient();
-        $audience = json_decode((string) $privatePackagistHttpclient->get('/oidc/audience/' . $this->organizationUrlName)->getBody(), true);
+        $audience = json_decode((string) $privatePackagistHttpclient->get(RequestPath::build('/oidc/audience/%s', $this->organizationUrlName))->getBody(), true);
         if (!isset($audience['audience'])) {
             throw new \RuntimeException('Unable to get audience');
         }
@@ -53,7 +54,7 @@ final class TrustedPublishingTokenExchange implements Plugin
             throw new \RuntimeException('Unable to generate OIDC token');
         }
 
-        $apiCredentials = json_decode((string) $privatePackagistHttpclient->post('/oidc/token-exchange/' . $this->organizationUrlName . '/' . $this->packageName, ['Authorization' => 'Bearer ' . $token->token])->getBody(), true);
+        $apiCredentials = json_decode((string) $privatePackagistHttpclient->post(RequestPath::build('/oidc/token-exchange/%s/%s', $this->organizationUrlName, $this->packageName), ['Authorization' => 'Bearer ' . $token->token])->getBody(), true);
         if (!isset($apiCredentials['key'], $apiCredentials['secret'])) {
             throw new \RuntimeException('Unable to exchange token');
         }
