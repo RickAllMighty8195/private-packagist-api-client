@@ -11,9 +11,9 @@ namespace PrivatePackagist\ApiClient\Api;
 
 use Http\Discovery\Psr17FactoryDiscovery;
 use PrivatePackagist\ApiClient\Client;
-use PrivatePackagist\ApiClient\Exception\InvalidArgumentException;
 use PrivatePackagist\ApiClient\Exception\RuntimeException;
 use PrivatePackagist\ApiClient\HttpClient\Message\ResponseMediator;
+use PrivatePackagist\ApiClient\HttpClient\RequestPath;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
@@ -183,9 +183,7 @@ abstract class AbstractApi
     }
 
     /**
-     * Builds a request path. A raw "#" or "?" in an argument ends the path during URI parsing and
-     * drops what follows, turning removePackage($customer, '#') into a DELETE on the whole
-     * collection. Arguments are encoded whole, so a package name's "/" arrives as %2F.
+     * Builds a request path with URL-encoded arguments, see RequestPath::build().
      *
      * @param string $template
      * @param string|int ...$arguments
@@ -193,34 +191,7 @@ abstract class AbstractApi
      */
     protected function buildPath($template, ...$arguments)
     {
-        foreach ($arguments as $index => $argument) {
-            $arguments[$index] = $this->encodePathArgument($argument);
-        }
-
-        return vsprintf($template, $arguments);
-    }
-
-    /**
-     * @param string|int $argument
-     * @return string
-     */
-    private function encodePathArgument($argument)
-    {
-        /** @var mixed $argument untyped at runtime; set to mixed, prevent PHPStan complaining about guard clauses */
-        if (!is_string($argument) && !is_int($argument)) {
-            throw new InvalidArgumentException(sprintf(
-                'Path arguments must be a string or an integer, %s given.',
-                is_object($argument) ? get_class($argument) : gettype($argument)
-            ));
-        }
-
-        $argument = (string) $argument;
-
-        if (in_array($argument, ['', '.' , '..'], true)) {
-            throw new InvalidArgumentException("Path arguments must not be empty, '.', or '..'.");
-        }
-
-        return rawurlencode($argument);
+        return RequestPath::build($template, ...$arguments);
     }
 
     /**

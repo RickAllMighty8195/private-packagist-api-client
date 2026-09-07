@@ -9,6 +9,7 @@
 
 namespace PrivatePackagist\ApiClient;
 
+use Http\Client\Common\HttpMethodsClient;
 use Http\Client\Common\Plugin;
 use Http\Discovery\Psr17FactoryDiscovery;
 use PrivatePackagist\ApiClient\HttpClient\HttpPluginClientBuilder;
@@ -154,6 +155,9 @@ class Client
         return new Api\VendorBundles($this, $this->responseMediator);
     }
 
+    /**
+     * @return HttpMethodsClient
+     */
     public function getHttpClient()
     {
         return $this->getHttpClientBuilder()->getHttpClient();
