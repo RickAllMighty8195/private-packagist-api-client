@@ -8,9 +8,12 @@ parameters:
 
     ignoreErrors:
         - '#Attribute class Deprecated does not exist#'
-        # The proxy exists to hand a path straight through to the protected method under test.
+        # The proxies exist to hand a path and a template straight through to the protected methods under test.
         -
-            message: '#must be a literal string or built with \$this->buildPath\(\)#'
+            message: '#must be a literal string or built with \$this->buildPath\(\) or RequestPath::build\(\)#'
+            path: tests/Api/AbstractApiTest.php
+        -
+            message: '#Template passed to \$this->buildPath\(\) must be a literal string#'
             path: tests/Api/AbstractApiTest.php
 
 services:
