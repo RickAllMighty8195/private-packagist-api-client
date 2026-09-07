@@ -132,6 +132,8 @@
          * [Create a new legacy keys for a customer](#create-a-new-legacy-keys-for-a-customer)
          * [Delete a legacy keys from a customer](#delete-a-legacy-keys-from-a-customer)
       * [Validate incoming webhook payloads](#validate-incoming-webhook-payloads)
+   * [Troubleshooting](#troubleshooting)
+      * [Encoded slashes in package names (self-hosted only)](#encoded-slashes-in-package-names-self-hosted-only)
    * [License](#license)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
@@ -1184,6 +1186,23 @@ $webhookSignature = new \PrivatePackagist\ApiClient\WebhookSignature($secret);
 $requestSignature = $request->hasHeader('Packagist-Signature') ? $request->getHeader('Packagist-Signature')[0] : null;
 $webhookSignature->validate($requestSignature, (string) $request->getBody());
 ```
+
+## Troubleshooting
+
+### Encoded slashes in package names (self-hosted only)
+
+Package names are sent URL-encoded inside a single path segment, e.g. `GET /api/packages/acme%2Fpackage/`.
+This only affects self-hosted installations, where a reverse proxy may reject or rewrite `%2F` before
+the request arrives. Apache is the common case: [`AllowEncodedSlashes`](https://httpd.apache.org/docs/current/mod/core.html#allowencodedslashes)
+defaults to `Off` and answers such URLs with a 404. Set it on the vhost that proxies to Private Packagist:
+
+```apache
+AllowEncodedSlashes NoDecode
+ProxyPass / http://private-packagist.example.com/ nocanon
+```
+
+`NoDecode` forwards `%2F` untouched, whereas `On` would decode it into a real `/`; `nocanon` keeps
+`mod_proxy` from rewriting the path.
 
 ## License
 
